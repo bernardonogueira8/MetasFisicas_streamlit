@@ -38,7 +38,7 @@ if uploaded_files:
 
             # Limpeza inicial
             df = df.drop(0, axis=0)
-            df = df.dropna(axis=0, thresh=6)
+            df = df.dropna(axis=0, thresh=4)
             # Remove coluna vazia se existir
             df = df.drop(
                 columns=['Observação', 'Comentários '], errors='ignore'
