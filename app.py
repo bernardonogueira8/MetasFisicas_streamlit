@@ -66,7 +66,7 @@ if uploaded_files:
 
             for item in lista:
                 df[item] = df[item].replace('-', 0, regex=True)
-                df[item] = df[item].replace('__', 0)
+                df[item] = df[item].replace('_', 0, , regex=True)
                 df[item] = df[item].replace(np.nan, 0)
             # Adicionar coluna com o nome do mês para identificar a origem
             df['Mês'] = mes
