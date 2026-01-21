@@ -7,8 +7,9 @@ st.set_page_config(page_title="Consolidador de Metas", layout="wide")
 st.title("📊 Consolidador de Metas Físicas")
 
 # 1. Upload de múltiplos ficheiros
-uploaded_files = st.file_uploader("Selecione as planilhas de metas (Excel)",
-                                  type=["xlsx"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Selecione as planilhas de metas (Excel)", type=["xlsx"], accept_multiple_files=True
+)
 
 if uploaded_files:
     all_data = []  # Lista para guardar os DataFrames processados
@@ -18,7 +19,8 @@ if uploaded_files:
             # --- Extração do Nome do Mês (Linha 6) ---
             # Lemos apenas o cabeçalho para pegar o "MÊS/ANO: JANEIRO/2025"
             header_info = pd.read_excel(
-                file, sheet_name="ACOMPANHAMENTO", skiprows=6, nrows=0)
+                file, sheet_name="ACOMPANHAMENTO", skiprows=6, nrows=0
+            )
             raw_name = header_info.columns[0]
             mes = raw_name.split(": ")[1].split("/")[0]
             ano = raw_name.split(": ")[1].split("/")[1]
@@ -50,7 +52,8 @@ if uploaded_files:
             # Preenchimento Lateral (Ações -> Objetivo)
             colunas_laterais = ['AÇÕES / RESPONSÁVEIS', 'Objetivo/Produto']
             df[colunas_laterais] = df[colunas_laterais].ffill(axis=1)
-            df = df[['Programa Temático / Compromisso / Iniciativa', 'AÇÕES / RESPONSÁVEIS',
+            df = df[['Programa Temático / Compromisso / Iniciativa',
+                     'AÇÕES / RESPONSÁVEIS',
                      'Objetivo/Produto', 'Meta/Prod. prog. incial', 'Meta/Prod. atual',
                      'Unidade de medida', 'Meta/Produto - Realizada',
                      'Meta/Produto - cumulada', 'Meta/Produto - Não iniciada',
@@ -70,8 +73,6 @@ if uploaded_files:
             df['Ano'] = ano
 
             all_data.append(df)
-            st.success(
-                f"Ficheiro processado: {file.name} (Mês: {mes}, Ano: {ano})")
 
         except Exception as e:
             st.error(f"Erro ao processar {file.name}: {e}")
@@ -79,8 +80,35 @@ if uploaded_files:
     # 3. Consolidação e Download
     if all_data:
         df_final = pd.concat(all_data, ignore_index=True)
+        meses_map = {
+            'JANEIRO': 1, 'FEVEREIRO': 2, 'MARÇO': 3, 'ABRIL': 4, 'MAIO': 5, 'JUNHO': 6,
+            'JULHO': 7, 'AGOSTO': 8, 'SETEMBRO': 9, 'OUTUBRO': 10, 'NOVEMBRO': 11, 'DEZEMBRO': 12
+        }
 
+        # Criar coluna temporária de ordenação e ordenar o DataFrame
+        df_final['mes_num'] = df_final['Mês'].str.upper().map(meses_map)
+        df_final = df_final.sort_values(
+            by=['Ano', 'mes_num']).drop(columns=['mes_num'])
+
+        # Validador visual
         st.subheader("Pré-visualização dos Dados Consolidados")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            anos_processados = sorted(df_final['Ano'].unique())
+            st.metric("Anos Identificados", ", ".join(
+                map(str, anos_processados)))
+
+        with col2:
+            # Mostra os meses únicos na ordem cronológica que definimos
+            meses_encontrados = df_final.drop_duplicates(subset=['Ano', 'Mês'])
+            resumo_meses = meses_encontrados['Mês'].tolist()
+            st.metric("Total de Meses",
+                      f"{len(resumo_meses)} meses encaminhados")
+
+        meses_lista = df_final['Mês'].unique().tolist()
+        st.info(f"**Meses detetados:** {', '.join(meses_lista)}")
+        st.divider()
         st.dataframe(df_final.head(10))
 
         # Função para converter DF para Excel (em memória)
