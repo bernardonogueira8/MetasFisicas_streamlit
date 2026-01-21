@@ -5,12 +5,12 @@ import streamlit as st
 st.title("Consolidador de Metas Físicas")
 
 name_df = pd.read_excel(
-    "raw/test.xlsx", sheet_name="ACOMPANHAMENTO", skiprows=6, nrows=0)
+    "raw/julho.xlsx", sheet_name="ACOMPANHAMENTO", skiprows=6, nrows=0)
 name_df = name_df.columns[0]
 name_df = name_df.split(": ")[1].replace("/", "_")
 name_df
 
-df = pd.read_excel("raw/test.xlsx", sheet_name="ACOMPANHAMENTO", skiprows=7)
+df = pd.read_excel("raw/julho.xlsx", sheet_name="ACOMPANHAMENTO", skiprows=7)
 df = df.rename(columns={
     'Meta/Produto': 'Meta/Produto - Realizada',
     'Unnamed: 7': 'Meta/Produto - cumulada',
@@ -45,8 +45,8 @@ lista = ['Meta/Prod. prog. incial', 'Meta/Prod. atual',
 
 for item in lista:
     df[item] = df[item].replace('-', 0, regex=True)
-    df[item] = df[item].replace('__', 0)
+    df[item] = df[item].replace('_', 0, regex=True)
     df[item] = df[item].replace(np.nan, 0)
-df.head(20)
+df.head(100)
 
 print(df.columns)

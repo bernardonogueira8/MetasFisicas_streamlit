@@ -38,26 +38,36 @@ if uploaded_files:
 
             # Limpeza inicial
             df = df.drop(0, axis=0)
-            df = df.dropna(axis=0, thresh=4)
+            df = df.dropna(axis=0, thresh=6)
+
             # Remove coluna vazia se existir
             df = df.drop(
                 columns=['Observação', 'Comentários '], errors='ignore'
             )
+
             # Preenchimento Vertical (ffill)
             list_ffill = [
-                'Programa Temático / Compromisso / Iniciativa', 'AÇÕES / RESPONSÁVEIS']
+                'Programa Temático / Compromisso / Iniciativa',
+                'AÇÕES / RESPONSÁVEIS'
+            ]
             for col in list_ffill:
                 df[col] = df[col].ffill()
 
             # Preenchimento Lateral (Ações -> Objetivo)
             colunas_laterais = ['AÇÕES / RESPONSÁVEIS', 'Objetivo/Produto']
             df[colunas_laterais] = df[colunas_laterais].ffill(axis=1)
-            df = df[['Programa Temático / Compromisso / Iniciativa',
-                     'AÇÕES / RESPONSÁVEIS',
-                     'Objetivo/Produto', 'Meta/Prod. prog. incial', 'Meta/Prod. atual',
-                     'Unidade de medida', 'Meta/Produto - Realizada',
-                     'Meta/Produto - cumulada', 'Meta/Produto - Não iniciada',
-                     'Meta/Produto - Em Execução']]
+            df = df[[
+                'Programa Temático / Compromisso / Iniciativa',
+                'AÇÕES / RESPONSÁVEIS',
+                'Objetivo/Produto',
+                'Meta/Prod. prog. incial',
+                'Meta/Prod. atual',
+                'Unidade de medida', ''
+                'Meta/Produto - Realizada',
+                'Meta/Produto - cumulada',
+                'Meta/Produto - Não iniciada',
+                'Meta/Produto - Em Execução'
+            ]]
             # Substituição de valores
             lista = ['Meta/Prod. prog. incial', 'Meta/Prod. atual',
                      'Unidade de medida', 'Meta/Produto - Realizada',
@@ -67,7 +77,6 @@ if uploaded_files:
             for item in lista:
                 df[item] = df[item].replace('-', 0, regex=True)
                 df[item] = df[item].replace('_', 0, regex=True)
-                df[item] = df[item].replace('c', 0, regex=True)
                 df[item] = df[item].replace('c', 0, regex=True)
                 df[item] = df[item].replace(np.nan, 0)
             # Adicionar coluna com o nome do mês para identificar a origem
