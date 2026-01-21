@@ -7,8 +7,8 @@ st.set_page_config(page_title="Consolidador de Metas", layout="wide")
 st.title("📊 Consolidador de Metas Físicas")
 
 # 1. Upload de múltiplos ficheiros
-uploaded_files = st.file_uploader("Selecione as planilhas de metas (Excel)", type=[
-                                  "xlsx"], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Selecione as planilhas de metas (Excel)",
+                                  type=["xlsx"], accept_multiple_files=True)
 
 if uploaded_files:
     all_data = []  # Lista para guardar os DataFrames processados
@@ -20,7 +20,8 @@ if uploaded_files:
             header_info = pd.read_excel(
                 file, sheet_name="ACOMPANHAMENTO", skiprows=6, nrows=0)
             raw_name = header_info.columns[0]
-            mes_ano = raw_name.split(": ")[1].replace("/", "_")
+            mes = raw_name.split(": ")[1].split("/")[0]
+            ano = raw_name.split(": ")[1].split("/")[1]
 
             # --- Processamento dos Dados (Linha 7 em diante) ---
             df = pd.read_excel(file, sheet_name="ACOMPANHAMENTO", skiprows=7)
@@ -34,8 +35,12 @@ if uploaded_files:
             })
 
             # Limpeza inicial
-            df = df.drop(0, axis=0)  # Remove a primeira linha de lixo
-
+            df = df.drop(0, axis=0)
+            df = df.dropna(axis=0, thresh=6)
+            # Remove coluna vazia se existir
+            df = df.drop(
+                columns=['Observação', 'Comentários '], errors='ignore'
+            )
             # Preenchimento Vertical (ffill)
             list_ffill = [
                 'Programa Temático / Compromisso / Iniciativa', 'AÇÕES / RESPONSÁVEIS']
@@ -45,12 +50,28 @@ if uploaded_files:
             # Preenchimento Lateral (Ações -> Objetivo)
             colunas_laterais = ['AÇÕES / RESPONSÁVEIS', 'Objetivo/Produto']
             df[colunas_laterais] = df[colunas_laterais].ffill(axis=1)
+            df = df[['Programa Temático / Compromisso / Iniciativa', 'AÇÕES / RESPONSÁVEIS',
+                     'Objetivo/Produto', 'Meta/Prod. prog. incial', 'Meta/Prod. atual',
+                     'Unidade de medida', 'Meta/Produto - Realizada',
+                     'Meta/Produto - cumulada', 'Meta/Produto - Não iniciada',
+                     'Meta/Produto - Em Execução']]
+            # Substituição de valores
+            lista = ['Meta/Prod. prog. incial', 'Meta/Prod. atual',
+                     'Unidade de medida', 'Meta/Produto - Realizada',
+                     'Meta/Produto - cumulada', 'Meta/Produto - Não iniciada',
+                     'Meta/Produto - Em Execução']
 
+            for item in lista:
+                df[item] = df[item].replace('-', 0, regex=True)
+                df[item] = df[item].replace('__', 0)
+                df[item] = df[item].replace(np.nan, 0)
             # Adicionar coluna com o nome do mês para identificar a origem
-            df['Mês de Referência'] = mes_ano
+            df['Mês'] = mes
+            df['Ano'] = ano
 
             all_data.append(df)
-            st.success(f"Ficheiro processado: {file.name} (Mês: {mes_ano})")
+            st.success(
+                f"Ficheiro processado: {file.name} (Mês: {mes}, Ano: {ano})")
 
         except Exception as e:
             st.error(f"Erro ao processar {file.name}: {e}")

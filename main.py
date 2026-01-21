@@ -18,6 +18,10 @@ df = df.rename(columns={
     'Unnamed: 9': 'Meta/Produto - Em Execução'
 })
 df = df.drop(0, axis=0)
+df = df.drop(
+    columns=['Observação', 'Comentários '], errors='ignore'
+)
+df = df.dropna(axis=0, thresh=6)
 df = df.reset_index(drop=True)
 list_ffill = [
     'Programa Temático / Compromisso / Iniciativa',
@@ -33,4 +37,16 @@ colunas_laterais = [
 ]
 
 df[colunas_laterais] = df[colunas_laterais].ffill(axis=1)
-df.head(3)
+
+lista = ['Meta/Prod. prog. incial', 'Meta/Prod. atual',
+         'Unidade de medida', 'Meta/Produto - Realizada',
+         'Meta/Produto - cumulada', 'Meta/Produto - Não iniciada',
+         'Meta/Produto - Em Execução']
+
+for item in lista:
+    df[item] = df[item].replace('-', 0, regex=True)
+    df[item] = df[item].replace('__', 0)
+    df[item] = df[item].replace(np.nan, 0)
+df.head(20)
+
+print(df.columns)
